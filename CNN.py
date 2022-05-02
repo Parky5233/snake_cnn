@@ -19,7 +19,7 @@ epoch_num = 30
 batch_size = 64
 learning_rate = 0.0001
 
-os.chdir("snake_images_test")
+os.chdir("snake_images")
 
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
 for species in species_classes:
@@ -51,8 +51,8 @@ dimy = 64
 height = round(sqrt(2876416/batch_size/16))
 width = height
 #loading all the data into a split of test and train
-datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor(),transforms.Normalize(0.4678,0.2206)])))
-datasets.append(ImageFolder("test_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor(),transforms.Normalize(0.4678,0.2206)])))
+datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
+datasets.append(ImageFolder("test_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
 
 def getStats(trainLoad):
     sum,squared_sum,num_batch = 0,0,0
@@ -148,7 +148,7 @@ class ConvNN(nn.Module):
 
 #setting up model
 my_model = ConvNN().to(device)
-opt = torch.optim.SGD(my_model.parameters(), lr = learning_rate)
+opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)
 
 print("Optimizer = "+opt.__str__())
 crit = nn.CrossEntropyLoss() #since we have multiple classes

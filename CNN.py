@@ -42,7 +42,7 @@ Models:
 
 -Train wheel project partnered with Research Ottawa
 - With dropout I was able to achieve 22.95% accuracy. Not great, but a slight improvement.
-The next step would be to improve the model structure and perhaps retry data norm
+The next step would be to improve the model structure and perhaps retry data norm. Update: rerana nd got 23.88%
 '''
 datasets = []
 channels = 3

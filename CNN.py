@@ -41,8 +41,8 @@ Models:
 - in our gradudate studies we can do directed reading about ML to go through fundamentals of ML
 
 -Train wheel project partnered with Research Ottawa
--If i dont hear about the contract by first week of May, contact Yifeng
- * 6000 for the semester 1500/month --> 750 biweekly
+- With dropout I was able to achieve 22.95% accuracy. Not great, but a slight improvement.
+The next step would be to improve the model structure and perhaps retry data norm
 '''
 datasets = []
 channels = 3
@@ -98,7 +98,7 @@ plt.show()
 #displaying a batch of training data
 
 '''
-Last Updated: 4/15/2022 6:15pm
+Last Updated: 5/3/2022 8:15am
 
 Concerns to address:
 - Low loss but also low accuracy. Perhaps CNN is not learning 
@@ -132,15 +132,18 @@ class ConvNN(nn.Module):
         self.conv1 = nn.Conv2d(3,6,5)
         self.pool = nn.MaxPool2d(2,2)
         self.conv2 = nn.Conv2d(6,16,5)# input = prev output channel size
+        self.drop1 = nn.Dropout(p=0.2)
         self.full_con1 = nn.Linear(16*height*width, 120)
+        self.drop2 = nn.Dropout(p=0.5)
         self.full_con2 = nn.Linear(120, 84)
+        self.drop3 = nn.Dropout(p=0.5)
         self.full_con3 = nn.Linear(84, len(species_classes))
 
     def forward(self,x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
+        x = self.drop1(self.pool(F.relu(self.conv1(x))))
+        x = self.drop2(self.pool(F.relu(self.conv2(x))))
         x = x.view(-1, 16*height*width)#flattening tensor
-        x = F.relu(self.full_con1(x))
+        x = F.relu(self.full_con1(self.drop3(x)))
         x = F.relu(self.full_con2(x))
         x = self.full_con3(x)#no softmax needed here as we use CEL which includes it
         return x
@@ -148,6 +151,7 @@ class ConvNN(nn.Module):
 
 #setting up model
 my_model = ConvNN().to(device)
+drop = nn.Dropout(p=0.2)
 opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)
 
 print("Optimizer = "+opt.__str__())
@@ -155,6 +159,7 @@ crit = nn.CrossEntropyLoss() #since we have multiple classes
 num_steps = len(train_loader)
 #trainloader size = (samplesize / batch num)
 #training
+my_model.train()
 for epoch in range(epoch_num):
     for i, (images, labels) in enumerate(train_loader):
         images = images.to(device)
@@ -174,6 +179,7 @@ for epoch in range(epoch_num):
 
 print("done training")
 countDict = {}
+my_model.eval()
 #testing
 with torch.no_grad():
     n_correct = 0

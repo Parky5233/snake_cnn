@@ -15,7 +15,7 @@ import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
 #parameters
-epoch_num = 30
+epoch_num = 15
 batch_size = 64
 learning_rate = 0.0001
 
@@ -42,8 +42,9 @@ Models:
 
 -Train wheel project partnered with Research Ottawa
 - With dropout I was able to achieve 22.95% accuracy. Not great, but a slight improvement.
-The next step would be to improve the model structure and perhaps retry data norm. Update: rerana nd got 23.88%
+The next step would be to improve the model structure and perhaps retry data norm. Update: reran and got 23.88%
 '''
+
 datasets = []
 channels = 3
 dimx = 64
@@ -98,6 +99,8 @@ plt.show()
 #displaying a batch of training data
 
 '''
+
+
 Last Updated: 5/3/2022 8:15am
 
 Concerns to address:
@@ -134,7 +137,7 @@ class ConvNN(nn.Module):
         self.conv2 = nn.Conv2d(6,16,5)# input = prev output channel size
         self.drop1 = nn.Dropout(p=0.2)
         self.full_con1 = nn.Linear(16*height*width, 120)
-        self.drop2 = nn.Dropout(p=0.5)
+        self.drop2 = nn.Dropout(p=0.3)
         self.full_con2 = nn.Linear(120, 84)
         self.drop3 = nn.Dropout(p=0.5)
         self.full_con3 = nn.Linear(84, len(species_classes))
@@ -151,7 +154,6 @@ class ConvNN(nn.Module):
 
 #setting up model
 my_model = ConvNN().to(device)
-drop = nn.Dropout(p=0.2)
 opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)
 
 print("Optimizer = "+opt.__str__())

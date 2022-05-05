@@ -12,7 +12,7 @@ import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
 #parameters
-epoch_num = 15
+epoch_num = 30
 batch_size = 64
 learning_rate = 0.0001
 
@@ -195,10 +195,10 @@ class convolutional_block(nn.Module):
         super(convolutional_block, self).__init__()
         self.relu = nn.ReLU()
         self.conv = nn.Conv2d(in_channels, out_channels, **kwargs)
-        self.batchnorm = nn.BatchNorm2d(out_channels)
+        #self.batchnorm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
-        return self.relu(self.batchnorm(self.conv(x)))
+        return self.relu(self.conv(x))#self.batchnorm()
 
 my_model = inceptNet().to(device)
 opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)

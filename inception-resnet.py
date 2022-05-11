@@ -15,18 +15,17 @@ print("Cuda Available: ",torch.cuda.is_available())
 #automation parameters
 epoch_list = [15,30]
 batch_list = [64,128]
-height_list = [2876416,1]#need to update the height for 128 batch size
+height_list = [2876416,5752832]
 lr_list = [0.001,0.0001]
 
 
 #parameters
 epoch_num = 30
-batch_size = 64
-learning_rate = 0.001
+batch_size = 128
+learning_rate = 0.0001
 
 os.chdir("snake_images")
 
-file = "epoch_"+str(epoch_num)+"_batch_"+str(batch_size)+"_lr_"+str(learning_rate)+".txt"
 
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
 for species in species_classes:
@@ -36,7 +35,7 @@ datasets = []
 channels = 3
 dimx = 64
 dimy = 64
-height = round(sqrt(2876416/batch_size/16))
+height = round(sqrt(5752832/batch_size/16))
 width = height
 #loading all the data into a split of test and train
 datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
@@ -213,6 +212,8 @@ class convolutional_block(nn.Module):
 my_model = inceptNet().to(device)
 opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)
 print("Optimizer = "+opt.__str__())
+
+file = "epoch_"+str(epoch_num)+"_batch_"+str(batch_size)+"_lr_"+str(learning_rate)+"_opt_adam.txt"
 crit = nn.CrossEntropyLoss()
 num_steps = len(train_loader)
 my_model.train()
@@ -253,17 +254,14 @@ with torch.no_grad():
         for i in range(len(labels)):
             label = labels[i]
             #print(label)
-            #print("Label = ",label)
+            print("Label = ",label)
             my_pred = pred[i]
-            #print("Guess = ",my_pred)
+            print("Guess = ",my_pred)
             if (label == my_pred):
                 n_class_correct[label] += 1
             n_class_samples[label] += 1
 
     acc = 100.0 * n_correct / n_samples
-    print("Length of Test Data: ", len(test_data))
-    print("Learning Rate = ", learning_rate)
-    print("Batch Size = ", batch_size)
     with open('../outputs/'+file,'w') as f:
         f.write("Length of Train Data: "+str(len(train_data))+"\n")
         f.write("Length of Test Data: "+str(len(test_data))+"\n")

@@ -10,13 +10,23 @@ from torchvision.utils import make_grid
 import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(torch.cuda.is_available())
+print("Cuda Available: ",torch.cuda.is_available())
+
+#automation parameters
+epoch_list = [15,30]
+batch_list = [64,128]
+height_list = [2876416,1]#need to update the height for 128 batch size
+lr_list = [0.001,0.0001]
+
+
 #parameters
 epoch_num = 30
 batch_size = 64
-learning_rate = 0.0001
+learning_rate = 0.001
 
 os.chdir("snake_images")
+
+file = "epoch_"+str(epoch_num)+"_batch_"+str(batch_size)+"_lr_"+str(learning_rate)+".txt"
 
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
 for species in species_classes:
@@ -62,7 +72,7 @@ plt.show()
 '''
 Implementing the Inception GoogLeNet arcitecture from https://arxiv.org/pdf/1409.4842.pdf
 
-Need to make code work with aux_logits
+Need to make code work with auxiliary classifiers
 '''
 class inceptNet(nn.Module):
     '''
@@ -240,8 +250,7 @@ with torch.no_grad():
         _,pred = torch.max(outputs,1)
         n_samples += labels.size(0)
         n_correct += (pred == labels).sum().item()
-        #for some reason batch_size exceeds the number of labels
-        for i in range(len(labels)): #could use batch_size*2 but, it's not always a perfect fit
+        for i in range(len(labels)):
             label = labels[i]
             #print(label)
             #print("Label = ",label)
@@ -252,12 +261,22 @@ with torch.no_grad():
             n_class_samples[label] += 1
 
     acc = 100.0 * n_correct / n_samples
-    print(f'Accuracy of the network {acc} %')
-    for key in countDict.keys():
-        print((str)()+" : "+(str)(countDict.get(key)))
-    #division by zero is possible here? I'm assuming that means im overtraining for one species and we did not test that species
-    #always guessing the same species. I don't think the data is properly shuffled
-    for i in range(len(species_classes)):
-        acc = 100.0 * n_class_correct[i] / n_class_samples[i]
-        print(f'Accuracy of {species_classes[i]}: {acc} %')
+    print("Length of Test Data: ", len(test_data))
+    print("Learning Rate = ", learning_rate)
+    print("Batch Size = ", batch_size)
+    with open('../outputs/'+file,'w') as f:
+        f.write("Length of Train Data: "+str(len(train_data))+"\n")
+        f.write("Length of Test Data: "+str(len(test_data))+"\n")
+        f.write("Learning Rate: "+str(learning_rate)+"\n")
+        f.write("Batch Size: "+str(batch_size)+"\n")
+        f.write(str(len(species_classes))+" Classes\n")
+        f.write(opt.__str__()+"\n")
+        print(f'Accuracy of the network {round(acc,2)} %')
+        f.write("Accuracy of Network: "+str(round(acc,2))+"%\n")
+        for key in countDict.keys():
+            print((str)()+" : "+(str)(countDict.get(key)))
+        for i in range(len(species_classes)):
+            acc = 100.0 * n_class_correct[i] / n_class_samples[i]
+            print(f'Accuracy of {species_classes[i]}: {round(acc,2)} %')
+            f.write("Accuracy of "+species_classes[i]+": "+str(round(acc,2))+"%\n")
 #graphical outputs

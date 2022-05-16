@@ -13,15 +13,14 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Cuda Available: ",torch.cuda.is_available())
 
 #automation parameters
-epoch_list = [15,30]
-batch_list = [64,128]
-height_list = [2876416,5752832]
+epoch_list = [15,30,50]
+batch_list = [32,64,128]
 lr_list = [0.001,0.0001]
 
 
 #parameters
 epoch_num = 30
-batch_size = 128
+batch_size = 32
 learning_rate = 0.0001
 
 os.chdir("snake_images")
@@ -35,8 +34,6 @@ datasets = []
 channels = 3
 dimx = 64
 dimy = 64
-height = round(sqrt(5752832/batch_size/16))
-width = height
 #loading all the data into a split of test and train
 datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
 datasets.append(ImageFolder("test_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
@@ -236,6 +233,7 @@ for epoch in range(epoch_num):
 
 print("done training")
 countDict = {}
+
 my_model.eval()
 #testing
 with torch.no_grad():
@@ -247,20 +245,24 @@ with torch.no_grad():
         images = images.to(device)
         labels = labels.to(device)
         outputs = my_model(images)
-
         _,pred = torch.max(outputs,1)
         n_samples += labels.size(0)
         n_correct += (pred == labels).sum().item()
         for i in range(len(labels)):
             label = labels[i]
+            #if not (str(label) in countDict.keys()):
+            #    countDict[str(label)] = 1
+            #else:
+            #    countDict[str(label)] += 1
             #print(label)
-            print("Label = ",label)
+            #print("Label = ",label)
             my_pred = pred[i]
-            print("Guess = ",my_pred)
+            #print("Guess = ",my_pred)
             if (label == my_pred):
                 n_class_correct[label] += 1
             n_class_samples[label] += 1
-
+    #for key in countDict.keys():
+    #    print(key,": ",countDict[key])
     acc = 100.0 * n_correct / n_samples
     with open('../outputs/'+file,'w') as f:
         f.write("Length of Train Data: "+str(len(train_data))+"\n")
@@ -269,12 +271,12 @@ with torch.no_grad():
         f.write("Batch Size: "+str(batch_size)+"\n")
         f.write(str(len(species_classes))+" Classes\n")
         f.write(opt.__str__()+"\n")
-        print(f'Accuracy of the network {round(acc,2)} %')
-        f.write("Accuracy of Network: "+str(round(acc,2))+"%\n")
+        print(f'Accuracy of the network {acc} %')
+        f.write("Accuracy of Network: "+str(acc)+"%\n")
         for key in countDict.keys():
             print((str)()+" : "+(str)(countDict.get(key)))
         for i in range(len(species_classes)):
             acc = 100.0 * n_class_correct[i] / n_class_samples[i]
-            print(f'Accuracy of {species_classes[i]}: {round(acc,2)} %')
-            f.write("Accuracy of "+species_classes[i]+": "+str(round(acc,2))+"%\n")
+            print(f'Accuracy of {species_classes[i]}: {acc} %')
+            f.write("Accuracy of "+species_classes[i]+": "+str(acc)+"%\n")
 #graphical outputs

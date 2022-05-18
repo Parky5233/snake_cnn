@@ -1,0 +1,162 @@
+import copy
+import time
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import torchvision
+from torchvision.datasets import ImageFolder
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
+from torchvision import datasets, models, transforms
+import os
+
+'''
+Using the Pytorch Inception-V3 and finetuning it to our needs
+https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
+'''
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("Cuda Available: ",torch.cuda.is_available())
+
+os.chdir("snake_images")
+species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
+for species in species_classes:
+    species = species.split(".")[0]
+#parameters
+epoch_num = 15
+batch_size = 64
+learning_rate = 0.001
+class_num = len(species_classes)
+
+
+datasets = []
+#loading all the data into a split of val and train
+datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((299,299)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
+datasets.append(ImageFolder("test_data",transform = transforms.Compose([transforms.Resize((299,299)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
+
+def disp_batch(data):
+    for images, labels in data:
+        fig,ax = plt.subplots(figsize = (16,12))
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.imshow(make_grid(images,nrow=16).permute(1,2,0))
+        break
+
+from torch.utils.data.dataloader import DataLoader
+
+train_data = datasets[0]
+test_data = datasets[1]
+
+print("Length of Train Data: ",len(train_data))
+print("Length of Test Data: ",len(test_data))
+print("Learning Rate = ",learning_rate)
+print("Batch Size = ",batch_size)
+#still need to work on finetuning this model
+train_loader = DataLoader(train_data,batch_size,shuffle=True,num_workers=0,pin_memory=True)
+val_loader = DataLoader(test_data,batch_size*2,num_workers=0,pin_memory=True)
+dataloaders = {'train':train_loader,'val':val_loader}
+disp_batch(train_loader)
+print(len(species_classes)," classes")
+plt.show()
+
+model = models.inception_v3(pretrained=False).to(device)
+num_features = model.AuxLogits.fc.in_features
+model.AuxLogits.fc = nn.Linear(num_features,class_num)
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features,class_num)
+
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.RandomResizedCrop(299),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(299),
+        transforms.CenterCrop(299),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+}
+
+#Parameters to optimize
+params_to_update = model.parameters()
+'''
+print("Params to learn:")
+for name,param in model.named_parameters():
+    if param.requires_grad == True:
+        print("\t",name)
+'''
+optimizer = optim.SGD(params_to_update, lr=learning_rate, momentum=0.9)
+crit = nn.CrossEntropyLoss()
+
+#Training and Eval
+since = time.time()
+val_history = []
+best_model_wts = copy.deepcopy(model.state_dict())
+best_acc = 0.0
+model = model.to(device)
+print(model)
+for epoch in range(epoch_num):
+    print('Epoch {}/{}'.format(epoch,epoch_num-1))
+    print('-'*10)
+
+    for phase in ['train','val']:
+        if phase == 'train':
+            model.train()
+        else:
+            model.eval()
+
+        running_loss = 0.0
+        running_corrects = 0
+
+        #Iterating Data
+        for inputs, labels in dataloaders[phase]:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            optimizer.zero_grad()
+
+            #forward
+            with torch.set_grad_enabled(phase == 'train'):
+                if phase == 'train':
+                    outputs, aux_ouputs = model(inputs)
+                    loss1 = crit(outputs,labels)
+                    loss2 = crit(aux_ouputs,labels)
+                    loss = loss1 + loss2*0.4
+                else:
+                    outputs = model(inputs)
+                    loss = crit(outputs,labels)
+
+                _,preds = torch.max(outputs,1)
+
+                #back
+                if phase == 'train':
+                    loss.backward()
+                    optimizer.step()
+            running_loss += loss.item() * inputs.size(0)
+            running_corrects += torch.sum(preds == labels.data)
+
+        epoch_loss = running_loss / len(dataloaders[phase].dataset)
+        epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+
+        print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+
+        # deep copy the model
+        if phase == 'val' and epoch_acc > best_acc:
+            best_acc = epoch_acc
+            best_model_wts = copy.deepcopy(model.state_dict())
+        if phase == 'val':
+            val_history.append(epoch_acc)
+
+    print()
+
+time_tot = time.time() - since
+print("Training complete in {:.0f}m {:.0f}s".format(time_tot // 60, time_tot % 60))
+print("Best val acc: {:4f}".format(best_acc))
+
+#load model weights
+model.load_state_dict(best_model_wts)

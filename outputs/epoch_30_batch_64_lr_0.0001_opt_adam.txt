@@ -1,4 +1,4 @@
-Length of Train Data: 12752
+Length of Train Data: 12750
 Length of Test Data: 2270
 Learning Rate: 0.0001
 Batch Size: 64
@@ -12,14 +12,14 @@ Parameter Group 0
     maximize: False
     weight_decay: 0
 )
-Accuracy of Network: 29.34%
-Accuracy of banded_watersnake.csv: 9.69%
-Accuracy of coachwhip.csv: 26.43%
-Accuracy of eastern_copperhead.csv: 25.11%
-Accuracy of eastern_milkesnake.csv: 18.06%
-Accuracy of grass_snake.csv: 21.15%
-Accuracy of gray_ratsnake.csv: 41.41%
-Accuracy of northern_cottonmouth.csv: 11.45%
-Accuracy of red_bellied_snake.csv: 12.33%
-Accuracy of rough_greensnake.csv: 81.06%
-Accuracy of western_ribbon_snake.csv: 46.7%
+Accuracy of Network: 31.54185022026432%
+Accuracy of banded_watersnake.csv: 14.09691629955947%
+Accuracy of coachwhip.csv: 24.229074889867842%
+Accuracy of eastern_copperhead.csv: 36.563876651982376%
+Accuracy of eastern_milkesnake.csv: 33.03964757709251%
+Accuracy of grass_snake.csv: 23.348017621145374%
+Accuracy of gray_ratsnake.csv: 27.312775330396477%
+Accuracy of northern_cottonmouth.csv: 17.180616740088105%
+Accuracy of red_bellied_snake.csv: 16.740088105726873%
+Accuracy of rough_greensnake.csv: 72.68722466960352%
+Accuracy of western_ribbon_snake.csv: 50.220264317180614%

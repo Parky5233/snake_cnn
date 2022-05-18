@@ -1,3 +1,4 @@
+import time
 from math import sqrt
 
 import torch
@@ -12,16 +13,10 @@ import os
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Cuda Available: ",torch.cuda.is_available())
 
-#automation parameters
-epoch_list = [15,30,50]
-batch_list = [32,64,128]
-lr_list = [0.001,0.0001]
-
-
 #parameters
-epoch_num = 30
-batch_size = 32
-learning_rate = 0.0001
+epoch_num = 15
+batch_size = 64
+learning_rate = 0.001
 
 os.chdir("snake_images")
 
@@ -31,9 +26,7 @@ for species in species_classes:
     species = species.split(".")[0]
 
 datasets = []
-channels = 3
-dimx = 64
-dimy = 64
+channels = 3\
 #loading all the data into a split of test and train
 datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
 datasets.append(ImageFolder("test_data",transform = transforms.Compose([transforms.Resize((224,224)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
@@ -108,11 +101,11 @@ class inceptNet(nn.Module):
         self.dropout = nn.Dropout(p=0.4)
         self.fc1 = nn.Linear(1024, classes)
 
-        #if self.aux_logits:
-        #    self.aux1 = InceptAux(512, classes)
-        #    self.aux2 = InceptAux(528, classes)
-        #else:
-        #    self.aux1 = self.aux2 = None
+        if self.aux_logits:
+            self.aux1 = InceptAux(512, classes)
+            self.aux2 = InceptAux(528, classes)
+        else:
+            self.aux1 = self.aux2 = None
 
     def forward(self, x):
         x = self.conv1(x)
@@ -125,15 +118,15 @@ class inceptNet(nn.Module):
         x = self.max_pool2(x)
 
         x = self.inception4a(x)
-        #if self.aux_logits and self.training:
-        #    aux1 = self.aux1(x)
+        if self.aux_logits and self.training:
+            aux1 = self.aux1(x)
 
         x = self.inception4b(x)
         x = self.inception4c(x)
         x = self.inception4d(x)
 
-        #if self.aux_logits and self.training:
-        #    aux2 = self.aux2(x)
+        if self.aux_logits and self.training:
+            aux2 = self.aux2(x)
 
         x = self.inception4e(x)
         x = self.max_pool(x)
@@ -143,10 +136,10 @@ class inceptNet(nn.Module):
         x = x.reshape(x.shape[0], -1)
         x = self.dropout(x)
         x = self.fc1(x)
-        #if self.aux_logits and self.training:
-        #    return aux1, aux2, x
-        #else:
-        return x
+        if self.aux_logits and self.training:
+            return aux1, aux2, x
+        else:
+            return x
 
 
 class inception(nn.Module):
@@ -205,12 +198,12 @@ class convolutional_block(nn.Module):
 
     def forward(self, x):
         return self.relu(self.conv(x))#self.batchnorm()
-
+since = time.time()
 my_model = inceptNet().to(device)
-opt = torch.optim.Adam(my_model.parameters(), lr = learning_rate)
+opt = torch.optim.SGD(my_model.parameters(),lr=learning_rate,momentum=0.09)
 print("Optimizer = "+opt.__str__())
 
-file = "epoch_"+str(epoch_num)+"_batch_"+str(batch_size)+"_lr_"+str(learning_rate)+"_opt_adam.txt"
+file = "epoch_"+str(epoch_num)+"_batch_"+str(batch_size)+"_lr_"+str(learning_rate)+"_opt_adam_aux_true.txt"
 crit = nn.CrossEntropyLoss()
 num_steps = len(train_loader)
 my_model.train()
@@ -220,9 +213,12 @@ for epoch in range(epoch_num):
         labels = labels.to(device)
 
         #forward
-        outputs = my_model(images)
-        loss = crit(outputs,labels)
-
+        #this model assumes auxiliary classifiers are being used
+        auxout1, auxout2, outputs = my_model(images)
+        loss0 = crit(outputs,labels)
+        loss1 = crit(auxout1,labels) * 0.3
+        loss2 = crit(auxout2, labels) * 0.3
+        loss = loss0+loss1+loss2
         #back and opt
         opt.zero_grad() #empty gradients
         loss.backward()
@@ -232,7 +228,9 @@ for epoch in range(epoch_num):
             print(f'Epoch [{epoch+1}/{epoch_num}], Step [{i+1}/{num_steps}], Loss: {loss.item():.4f}')
 
 print("done training")
+time_tot = time.time() - since
 countDict = {}
+
 
 my_model.eval()
 #testing
@@ -250,19 +248,10 @@ with torch.no_grad():
         n_correct += (pred == labels).sum().item()
         for i in range(len(labels)):
             label = labels[i]
-            #if not (str(label) in countDict.keys()):
-            #    countDict[str(label)] = 1
-            #else:
-            #    countDict[str(label)] += 1
-            #print(label)
-            #print("Label = ",label)
             my_pred = pred[i]
-            #print("Guess = ",my_pred)
             if (label == my_pred):
                 n_class_correct[label] += 1
             n_class_samples[label] += 1
-    #for key in countDict.keys():
-    #    print(key,": ",countDict[key])
     acc = 100.0 * n_correct / n_samples
     with open('../outputs/'+file,'w') as f:
         f.write("Length of Train Data: "+str(len(train_data))+"\n")
@@ -273,10 +262,11 @@ with torch.no_grad():
         f.write(opt.__str__()+"\n")
         print(f'Accuracy of the network {acc} %')
         f.write("Accuracy of Network: "+str(acc)+"%\n")
-        for key in countDict.keys():
-            print((str)()+" : "+(str)(countDict.get(key)))
+        #for key in countDict.keys():
+        #    print((str)()+" : "+(str)(countDict.get(key)))
         for i in range(len(species_classes)):
             acc = 100.0 * n_class_correct[i] / n_class_samples[i]
             print(f'Accuracy of {species_classes[i]}: {acc} %')
             f.write("Accuracy of "+species_classes[i]+": "+str(acc)+"%\n")
-#graphical outputs
+        print("Training complete in {:.0f}m {:.0f}s".format(time_tot // 60, time_tot % 60))
+        f.write("Time: ",time_tot/60,"m ",time_tot%60,"s")

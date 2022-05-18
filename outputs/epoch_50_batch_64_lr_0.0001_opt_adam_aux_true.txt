@@ -1,0 +1,25 @@
+Length of Train Data: 12750
+Length of Test Data: 2270
+Learning Rate: 0.0001
+Batch Size: 64
+10 Classes
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+)
+Accuracy of Network: 28.502202643171806%
+Accuracy of banded_watersnake.csv: 26.431718061674008%
+Accuracy of coachwhip.csv: 15.418502202643172%
+Accuracy of eastern_copperhead.csv: 40.08810572687225%
+Accuracy of eastern_milkesnake.csv: 7.488986784140969%
+Accuracy of grass_snake.csv: 23.788546255506606%
+Accuracy of gray_ratsnake.csv: 20.704845814977972%
+Accuracy of northern_cottonmouth.csv: 15.859030837004406%
+Accuracy of red_bellied_snake.csv: 23.348017621145374%
+Accuracy of rough_greensnake.csv: 79.29515418502203%
+Accuracy of western_ribbon_snake.csv: 32.59911894273128%

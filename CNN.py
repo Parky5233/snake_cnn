@@ -17,7 +17,7 @@ print(torch.cuda.is_available())
 #parameters
 epoch_num = 15
 batch_size = 64
-learning_rate = 0.0001
+learning_rate = 0.001
 
 os.chdir("snake_images")
 
@@ -196,13 +196,9 @@ with torch.no_grad():
         _,pred = torch.max(outputs,1)
         n_samples += labels.size(0)
         n_correct += (pred == labels).sum().item()
-        #for some reason batch_size exceeds the number of labels
-        for i in range(len(labels)): #could use batch_size*2 but, it's not always a perfect fit
+        for i in range(len(labels)):
             label = labels[i]
-            #print(label)
-            #print("Label = ",label)
             my_pred = pred[i]
-            #print("Guess = ",my_pred)
             if (label == my_pred):
                 n_class_correct[label] += 1
             n_class_samples[label] += 1
@@ -211,8 +207,6 @@ with torch.no_grad():
     print(f'Accuracy of the network {acc} %')
     for key in countDict.keys():
         print((str)()+" : "+(str)(countDict.get(key)))
-    #division by zero is possible here? I'm assuming that means im overtraining for one species and we did not test that species
-    #always guessing the same species. I don't think the data is properly shuffled
     for i in range(len(species_classes)):
         acc = 100.0 * n_class_correct[i] / n_class_samples[i]
         print(f'Accuracy of {species_classes[i]}: {acc} %')

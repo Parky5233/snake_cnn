@@ -30,7 +30,7 @@ batch_size = 64
 learning_rate = 0.001
 class_num = len(species_classes)
 
-
+output = ""
 datasets = []
 #loading all the data into a split of val and train
 datasets.append(ImageFolder("train_data",transform = transforms.Compose([transforms.Resize((299,299)),transforms.ToTensor()])))#,transforms.Normalize(0.4678,0.2206)
@@ -50,15 +50,20 @@ train_data = datasets[0]
 test_data = datasets[1]
 
 print("Length of Train Data: ",len(train_data))
+output += "Length of Train Data: "+str(len(train_data))+"\n"
 print("Length of Test Data: ",len(test_data))
-print("Learning Rate = ",learning_rate)
+output += "Length of Test Data: "+str(len(test_data))+"\n"
+print("Learning Rate: ",learning_rate)
+output += "Learning Rate: "+str(learning_rate)+"\n"
 print("Batch Size = ",batch_size)
+output += "Batch Size: "+str(batch_size)+"\n"
 #still need to work on finetuning this model
 train_loader = DataLoader(train_data,batch_size,shuffle=True,num_workers=0,pin_memory=True)
 val_loader = DataLoader(test_data,batch_size*2,num_workers=0,pin_memory=True)
 dataloaders = {'train':train_loader,'val':val_loader}
 disp_batch(train_loader)
 print(len(species_classes)," classes")
+output += "Num Classes: "+str(len(species_classes))+"\n"
 plt.show()
 
 model = models.inception_v3(pretrained=False).to(device)
@@ -90,7 +95,8 @@ for name,param in model.named_parameters():
     if param.requires_grad == True:
         print("\t",name)
 '''
-optimizer = optim.SGD(params_to_update, lr=learning_rate, momentum=0.9)
+#optimizer = optim.SGD(params_to_update, lr=learning_rate, momentum=0.9)
+optimizer = optim.Adam(params_to_update,lr=learning_rate)
 crit = nn.CrossEntropyLoss()
 
 #Training and Eval
@@ -100,6 +106,10 @@ best_model_wts = copy.deepcopy(model.state_dict())
 best_acc = 0.0
 model = model.to(device)
 print(model)
+n_samples = 0
+n_correct = 0
+n_class_correct = [0 for i in range(len(species_classes))]
+n_class_samples = [0 for i in range(len(species_classes))]
 for epoch in range(epoch_num):
     print('Epoch {}/{}'.format(epoch,epoch_num-1))
     print('-'*10)
@@ -132,7 +142,15 @@ for epoch in range(epoch_num):
                     loss = crit(outputs,labels)
 
                 _,preds = torch.max(outputs,1)
-
+                if phase == 'val':
+                    n_samples += labels.size(0)
+                    n_correct += (preds == labels).sum().item()
+                    for i in range(len(labels)):
+                        label = labels[i]
+                        my_pred = preds[i]
+                        if(label == my_pred):
+                            n_class_correct[label] += 1
+                        n_class_samples[label] += 1
                 #back
                 if phase == 'train':
                     loss.backward()
@@ -144,6 +162,7 @@ for epoch in range(epoch_num):
         epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
         print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+        #output += "Loss: " + str(batch_size) + "\n"
 
         # deep copy the model
         if phase == 'val' and epoch_acc > best_acc:
@@ -157,6 +176,19 @@ for epoch in range(epoch_num):
 time_tot = time.time() - since
 print("Training complete in {:.0f}m {:.0f}s".format(time_tot // 60, time_tot % 60))
 print("Best val acc: {:4f}".format(best_acc))
+print("Overall Acc: "+str(100.0*n_correct/n_samples))
+for i in range(len(species_classes)):
+    acc = 100.0 * n_class_correct[i] / n_class_samples[i]
+    print(f'Accuracy of {species_classes[i]}: {acc} %')
 
 #load model weights
 model.load_state_dict(best_model_wts)
+plt.title("Accuracy vs. Number of Epochs")
+plt.xlabel("Training Epochs")
+plt.ylabel("Validation Accuracy")
+plt.plot(range(1,epoch_num+1),val_history,label="Scratch")
+plt.ylim((0,1.))
+plt.xticks(np.arange(1,epoch_num+1,1.0))
+plt.legend()
+plt.savefig('scratch-net.pdf')
+plt.show()

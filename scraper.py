@@ -5,7 +5,7 @@ import csv
 # future improvement, automated query and download to folder?
 
 if __name__ == '__main__':
-    os.chdir('snake_images_test')
+    os.chdir('snake_images')
     snake_images = []
     count = 0
     species_csvs = [fName for fName in os.listdir() if fName.endswith(".csv")]

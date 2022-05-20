@@ -269,4 +269,4 @@ with torch.no_grad():
             print(f'Accuracy of {species_classes[i]}: {acc} %')
             f.write("Accuracy of "+species_classes[i]+": "+str(acc)+"%\n")
         print("Training complete in {:.0f}m {:.0f}s".format(time_tot // 60, time_tot % 60))
-        f.write("Time: ",time_tot/60,"m ",time_tot%60,"s")
+        f.write("Time: "+str(time_tot/60)+"m "+str(time_tot%60)+"s")

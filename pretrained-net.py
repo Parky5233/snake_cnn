@@ -90,7 +90,8 @@ for name,param in model.named_parameters():
     if param.requires_grad == True:
         print("\t",name)
 '''
-optimizer = optim.SGD(params_to_update, lr=learning_rate, momentum=0.9)
+#optimizer = optim.SGD(params_to_update, lr=learning_rate, momentum=0.9)
+optimizer = optim.Adam(params_to_update,lr=learning_rate)
 crit = nn.CrossEntropyLoss()
 
 #Training and Eval
@@ -100,6 +101,10 @@ best_model_wts = copy.deepcopy(model.state_dict())
 best_acc = 0.0
 model = model.to(device)
 print(model)
+n_samples = 0
+n_correct = 0
+n_class_correct = [0 for i in range(len(species_classes))]
+n_class_samples = [0 for i in range(len(species_classes))]
 for epoch in range(epoch_num):
     print('Epoch {}/{}'.format(epoch,epoch_num-1))
     print('-'*10)
@@ -132,7 +137,15 @@ for epoch in range(epoch_num):
                     loss = crit(outputs,labels)
 
                 _,preds = torch.max(outputs,1)
-
+                if phase == 'val':
+                    n_samples += labels.size(0)
+                    n_correct += (preds == labels).sum().item()
+                    for i in range(len(labels)):
+                        label = labels[i]
+                        my_pred = preds[i]
+                        if(label == my_pred):
+                            n_class_correct[label] += 1
+                        n_class_samples[label] += 1
                 #back
                 if phase == 'train':
                     loss.backward()
@@ -157,6 +170,19 @@ for epoch in range(epoch_num):
 time_tot = time.time() - since
 print("Training complete in {:.0f}m {:.0f}s".format(time_tot // 60, time_tot % 60))
 print("Best val acc: {:4f}".format(best_acc))
+print("Overall Acc: "+str(100.0*n_correct/n_samples))
+for i in range(len(species_classes)):
+    acc = 100.0 * n_class_correct[i] / n_class_samples[i]
+    print(f'Accuracy of {species_classes[i]}: {acc} %')
 
 #load model weights
 model.load_state_dict(best_model_wts)
+plt.title("Accuracy vs. Number of Epochs")
+plt.xlabel("Training Epochs")
+plt.ylabel("Validation Accuracy")
+plt.plot(range(1,epoch_num+1),val_history,label="Pretrained")
+plt.ylim((0,1.))
+plt.xticks(np.arange(1,epoch_num+1,1.0))
+plt.legend()
+plt.savefig('scratch-net.pdf')
+plt.show()

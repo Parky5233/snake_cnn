@@ -182,6 +182,9 @@ for epoch in range(epoch_num):
 print("done training")
 countDict = {}
 my_model.eval()
+
+confusionMat = np.zeros((len(species_classes),len(species_classes)))
+print("test = "+str(confusionMat[0][0]))
 #testing
 with torch.no_grad():
     n_correct = 0
@@ -199,6 +202,10 @@ with torch.no_grad():
         for i in range(len(labels)):
             label = labels[i]
             my_pred = pred[i]
+            if confusionMat[label][my_pred] == None:
+                confusionMat[label][my_pred] = 1
+            else:
+                confusionMat[label][my_pred] += 1
             if (label == my_pred):
                 n_class_correct[label] += 1
             n_class_samples[label] += 1
@@ -210,4 +217,11 @@ with torch.no_grad():
     for i in range(len(species_classes)):
         acc = 100.0 * n_class_correct[i] / n_class_samples[i]
         print(f'Accuracy of {species_classes[i]}: {acc} %')
+    print("\n")
+    for i in range(len(species_classes)):
+        for j in range(len(species_classes)):
+            print(str(confusionMat[i][j])+" ", end='')
+        print(" ")
+    for i in range(len(species_classes)):
+        print(str(i)+" = "+species_classes[i])
 #graphical outputs

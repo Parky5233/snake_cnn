@@ -17,8 +17,9 @@ Using the pretrained Pytorch Inception-V3 and finetuning it to our needs
 https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
 '''
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print("Cuda Available: ",torch.cuda.is_available())
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
+#print("Cuda Available: ",torch.cuda.is_available())
 
 os.chdir("snake_images")
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
@@ -105,6 +106,7 @@ n_samples = 0
 n_correct = 0
 n_class_correct = [0 for i in range(len(species_classes))]
 n_class_samples = [0 for i in range(len(species_classes))]
+confusionMat = np.zeros((len(species_classes),len(species_classes)))
 for epoch in range(epoch_num):
     print('Epoch {}/{}'.format(epoch,epoch_num-1))
     print('-'*10)
@@ -137,12 +139,17 @@ for epoch in range(epoch_num):
                     loss = crit(outputs,labels)
 
                 _,preds = torch.max(outputs,1)
+
                 if phase == 'val':
                     n_samples += labels.size(0)
                     n_correct += (preds == labels).sum().item()
                     for i in range(len(labels)):
                         label = labels[i]
                         my_pred = preds[i]
+                        if confusionMat[label][my_pred] == None:
+                            confusionMat[label][my_pred] = 1
+                        else:
+                            confusionMat[label][my_pred] += 1
                         if(label == my_pred):
                             n_class_correct[label] += 1
                         n_class_samples[label] += 1
@@ -174,15 +181,22 @@ print("Overall Acc: "+str(100.0*n_correct/n_samples))
 for i in range(len(species_classes)):
     acc = 100.0 * n_class_correct[i] / n_class_samples[i]
     print(f'Accuracy of {species_classes[i]}: {acc} %')
-
+print("\n")
+#printing confusion matrix
+for i in range(len(species_classes)):
+    for j in range(len(species_classes)):
+        print(str(confusionMat[i][j])+" ", end='')
+    print(" ")
+for i in range(len(species_classes)):
+    print(str(i)+" = "+species_classes[i])
 #load model weights
 model.load_state_dict(best_model_wts)
-plt.title("Accuracy vs. Number of Epochs")
-plt.xlabel("Training Epochs")
-plt.ylabel("Validation Accuracy")
-plt.plot(range(1,epoch_num+1),val_history,label="Pretrained")
-plt.ylim((0,1.))
-plt.xticks(np.arange(1,epoch_num+1,1.0))
-plt.legend()
-plt.savefig('scratch-net.pdf')
-plt.show()
+# plt.title("Accuracy vs. Number of Epochs")
+# plt.xlabel("Training Epochs")
+# plt.ylabel("Validation Accuracy")
+# plt.plot(range(1,epoch_num+1),val_history,label="Pretrained")
+# plt.ylim((0,1.))
+# plt.xticks(np.arange(1,epoch_num+1,1.0))
+# plt.legend()
+# plt.savefig('scratch-net.pdf')
+# plt.show()

@@ -30,8 +30,8 @@ batch_size = 64
 learning_rate = 0.001
 class_num = len(species_classes)
 #parameters for automation
-epoch_set = [1,2,15,30,50]
-batch_set = [32,64,128]
+epoch_set = [5,15,30,50]
+batch_set = [32,64]
 learn_rates = [0.01,0.001,0.0001]
 
 for epochs in epoch_set:
@@ -68,10 +68,10 @@ for epochs in epoch_set:
             train_loader = DataLoader(train_data,batch_size,shuffle=True,num_workers=0,pin_memory=True)
             val_loader = DataLoader(test_data,batch_size*2,num_workers=0,pin_memory=True)
             dataloaders = {'train':train_loader,'val':val_loader}
-            disp_batch(train_loader)
+            #disp_batch(train_loader)
             print(len(species_classes)," classes")
             output += "Num Classes: "+str(len(species_classes))+"\n"
-            plt.show()
+            #plt.show()
 
             model = models.inception_v3(pretrained=False).to(device)
             num_features = model.AuxLogits.fc.in_features
@@ -112,7 +112,7 @@ for epochs in epoch_set:
             best_model_wts = copy.deepcopy(model.state_dict())
             best_acc = 0.0
             model = model.to(device)
-            print(model)
+            #print(model)
             n_samples = 0
             n_correct = 0
             n_class_correct = [0 for i in range(len(species_classes))]

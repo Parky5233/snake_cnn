@@ -1,0 +1,28 @@
+Runtime: 135.0m 24.342255353927612s
+Best Val Acc: tensor(0.6527, device='cuda:0', dtype=torch.float64)
+Overall Acc: 60.87371512481645
+Accuracy of banded_watersnake.csv: 50.36710719530103
+Accuracy of boa_constrictor.csv: 58.604992657856094
+Accuracy of coachwhip.csv: 51.65932452276065
+Accuracy of eastern_copperhead.csv: 72.27606461086637
+Accuracy of eastern_milkesnake.csv: 71.52716593245228
+Accuracy of grass_snake.csv: 46.68135095447871
+Accuracy of gray_ratsnake.csv: 55.242290748898675
+Accuracy of northern_cottonmouth.csv: 46.284875183553595
+Accuracy of northern_watersnake.csv: 45.565345080763585
+Accuracy of red_bellied_snake.csv: 69.48604992657856
+Accuracy of rough_greensnake.csv: 85.15418502202643
+Accuracy of western_ribbon_snake.csv: 77.63582966226139
+3430.0 171.0 137.0 96.0 117.0 341.0 575.0 563.0 1007.0 201.0 118.0 54.0 
+156.0 3991.0 297.0 249.0 193.0 343.0 718.0 321.0 183.0 135.0 131.0 93.0 
+158.0 345.0 3518.0 148.0 85.0 378.0 497.0 206.0 531.0 760.0 71.0 113.0 
+114.0 262.0 208.0 4922.0 156.0 105.0 268.0 367.0 195.0 108.0 48.0 57.0 
+101.0 224.0 125.0 113.0 4871.0 343.0 469.0 112.0 330.0 44.0 54.0 24.0 
+344.0 215.0 366.0 41.0 72.0 3179.0 592.0 354.0 744.0 655.0 100.0 148.0 
+210.0 484.0 300.0 91.0 365.0 494.0 3762.0 262.0 344.0 268.0 104.0 126.0 
+452.0 291.0 185.0 339.0 153.0 271.0 448.0 3152.0 1188.0 154.0 102.0 75.0 
+506.0 226.0 212.0 80.0 371.0 507.0 684.0 609.0 3103.0 333.0 83.0 96.0 
+74.0 137.0 406.0 49.0 58.0 406.0 295.0 117.0 257.0 4732.0 162.0 117.0 
+34.0 58.0 108.0 63.0 36.0 147.0 126.0 78.0 101.0 128.0 5799.0 132.0 
+57.0 115.0 109.0 47.0 58.0 323.0 248.0 52.0 152.0 264.0 98.0 5287.0 
+0 = banded_watersnake.csv1 = boa_constrictor.csv2 = coachwhip.csv3 = eastern_copperhead.csv4 = eastern_milkesnake.csv5 = grass_snake.csv6 = gray_ratsnake.csv7 = northern_cottonmouth.csv8 = northern_watersnake.csv9 = red_bellied_snake.csv10 = rough_greensnake.csv11 = western_ribbon_snake.csv

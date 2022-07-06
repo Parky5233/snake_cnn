@@ -17,24 +17,24 @@ Using the pretrained Pytorch Inception-V3 and finetuning it to our needs
 https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
 '''
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
-#print("Cuda Available: ",torch.cuda.is_available())
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cpu')
+print("Cuda Available: ",torch.cuda.is_available())
 
 os.chdir("snake_images")
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
 for species in species_classes:
     species = species.split(".")[0]
 #parameters
-epoch_num = 15
+epoch_num = 50
 batch_size = 64
 learning_rate = 0.001
 class_num = len(species_classes)
 
 #parameters for automation
-epoch_set = [1,2,15,30,50]
-batch_set = [32,64,128]
-learn_rates = [0.01,0.001,0.0001]
+epoch_set = [50]#5,15,30,50
+batch_set = [64]#32,64
+learn_rates = [0.0001]#0.01,0.001,0.0001
 
 for epochs in epoch_set:
     for batch in batch_set:
@@ -67,7 +67,7 @@ for epochs in epoch_set:
             dataloaders = {'train':train_loader,'val':val_loader}
             #disp_batch(train_loader)
             print(len(species_classes)," classes")
-            plt.show()
+            #plt.show()
 
             model = models.inception_v3(pretrained=True).to(device)
             num_features = model.AuxLogits.fc.in_features
@@ -182,7 +182,7 @@ for epochs in epoch_set:
                 print()
 
             time_tot = time.time() - since
-            file = str(epochs)+"_e_"+str(batch)+"_b_"+str(lr)+"_lr.txt"
+            file = str(epochs)+"_e_"+str(batch)+"_b_"+str(lr)+"_lr_pretrained.txt"
             with open('../outputs/' + file, 'w') as f:
                 f.write("Runtime: "+str(time_tot//60)+"m "+str(time_tot%60)+"s\n")
                 f.write("Best Val Acc: "+str(best_acc)+"\n")

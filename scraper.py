@@ -38,12 +38,12 @@ if __name__ == '__main__':
                 continue
             else:
                 data_read = csv.reader(snake_data, delimiter=",")
-                count = 0
+                count = 1
                 next(data_read)
                 for line in data_read:
                     #print(line)
                     link = line[1]
-                    img_fName = line[0] + '_' + link.split('/')[-1]
+                    img_fName = cur_snake+'_'+line[0]+".jpg"
                     r = requests.get(link, stream=True)
                     if r.status_code == 200:
                         with open(img_fName, 'wb') as save:
@@ -52,15 +52,14 @@ if __name__ == '__main__':
                     else:
                         print("this image failed to save\n" + link)
                     if training:
-                        if count == train_size - 1:
+                        if count == train_size:
                             training = False
                             os.chdir("../../test_data")
                             if not os.path.isdir(cur_snake):
                                 os.mkdir(cur_snake)
                             os.chdir(cur_snake)
                             print("downloading testing")
-                        else:
-                            count += 1
+                        count += 1
                     elif count == data_size:
                         os.chdir('..')
                         break

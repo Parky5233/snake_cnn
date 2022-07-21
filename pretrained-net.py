@@ -6,7 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import torchvision
+import torchaudio
 from torchvision.datasets import ImageFolder
+from torchvision.models import Inception_V3_Weights
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 from torchvision import datasets, models, transforms
@@ -20,6 +22,8 @@ https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.ht
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
 print("Cuda Available: ",torch.cuda.is_available())
+print(torch.version.cuda)
+print(torch.version.__version__)
 
 os.chdir("snake_images")
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
@@ -69,7 +73,7 @@ for epochs in epoch_set:
             print(len(species_classes)," classes")
             #plt.show()
 
-            model = models.inception_v3(pretrained=True).to(device)
+            model = models.inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1).to(device)
             num_features = model.AuxLogits.fc.in_features
             model.AuxLogits.fc = nn.Linear(num_features,class_num)
             num_features = model.fc.in_features

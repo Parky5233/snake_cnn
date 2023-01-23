@@ -1,3 +1,4 @@
+import gc
 import fastai.vision.learner
 import timm
 import os
@@ -10,83 +11,85 @@ import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as T
 
-#Note: this code does not run on Windows OS
+#gc.collect()
+# Note: this code does not run on Windows OS
 '''
 This code was written following various tutorials and examples:
 - https://docs.fast.ai/tutorial.vision
 - https://pypi.org/project/timm/#models
-
-To Do:
-- finetune model on train set, test model on test set and print confusion matrix
-- expand analysis to sam models and others
-
-Currently:
-- pretrained vit_base_patch16_224 is being tested
-
-CWA: (bs: 32, lr:0.0008)
-- banded_watersnake: 76.44
-- boa_constrictor: 90.22
-- coachwhip: 86.67
-- eastern_copperhead: 88.89
-- eastern_milkesnake: 86.22
-- grass_snake: 82.22
-- gray_ratsnake: 80.0
-- nothern_cottonmouth: 70.67
-- nothern_watersnake: 72.00
-- red_bellied_snake: 88.44
-- rough_greensnake: 99.11
-- western_ribbon_snake: 92.00
-
-Overall: 84.4% accuracy
-
-Note: was achieving better with bs:64 (default bs) but randomly started to get out of cuda memory errors
 '''
 
-def set_seed(x=42):
-    random.seed(x)
-    np.random.seed(x)
-    torch.manual_seed(x)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    if torch.cuda.is_available(): torch.cuda.manual_seed_all(x)
+set_seed(42, True) #setting random seed for reproducability
 
-set_seed()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-#print(timm.list_models('*vit*'))
-
-model = timm.create_model('vit_base_patch16_224', pretrained=True,num_classes=12)
-
-#print(device)
-
-labels = os.listdir("snake_images/test")
+'''
+Aug 10
+- Work on more hyperparameters (batch sizes) - in  prog
+    * mod: reg, sam
+    * bs: 32,64,128
+    * e: 5, 15
+- try to finetune the final model with the small snake data to see performance
+- make duplicates of the images with slightly different crops and try to change batch size to 4 or pretrain with batch size 4
+and analyze impact
+'''
+labels = os.listdir("snake_images/test") #class labeled derived from folder names
 
 path = "snake_images"
-files = get_image_files(path)
+#files = get_image_files(path) #getting all filenames for snake_images folder
+batch_size = 16 #normally 32
+dls = ImageDataLoaders.from_folder(path, train='train', valid='test', bs=batch_size, item_tfms=Resize(224), seed=42) #image dataloader
 
-pat = r'^(.*)_\d+.jpg'
-print(os.listdir())
-dls = ImageDataLoaders.from_folder(path, train='train',valid='test',bs=32, item_tfms=Resize(224))
-dls.show_batch()
-plt.show()
+#setting to 2nd GPU (note: if device has no 2nd GPU, error will raise)
+torch.cuda.set_device(1)
+dls.device = default_device()
 
-learn = fastai.vision.learner.vision_learner(dls, 'vit_base_patch16_224_sam', metrics=error_rate)#'vit_base_patch16_224'
-
-#learn = fastai.vision.learner.vision_learner(dls, 'vit_base_patch16_224_sam', metrics=error_rate)
-print(learn.lr_find())#0.0005
-plt.show()
-
-learn.fine_tune(2,8e-4)
+dls.rng.seed(42) #setting dataloader random seed for reproducability
+#dls.show_batch()
+#plt.show()
+mod_name = 'vit_base_patch16_224' #specifying model type - ViT with patch size of 16 and image size 224
+learn = fastai.vision.learner.vision_learner(dls, mod_name, metrics=error_rate)  # 'vit_base_patch16_224'
+learn.dls.rng.seed(42)
+# learn = fastai.vision.learner.vision_learner(dls, 'vit_base_patch16_224_sam', metrics=error_rate)
+# print(learn.lr_find())
+# plt.show()
+epochs = 5
+lr = 1e-3
+learn.fine_tune(epochs, lr)  # 0.001-0.002
 learn.show_results()
+print("epochs: " + str(epochs) + ", lr: " + str(lr))
+#interp = Interpretation.from_learner(learn)
+#interp.plot_top_losses(9, figsize=(15, 10))
+#plt.show()
 
-interp = Interpretation.from_learner(learn)
-interp.plot_top_losses(9, figsize=(15,10))
-plt.show()
-
+#presenting confusion matrix for initial training performance
 class_int = ClassificationInterpretation.from_learner(learn)
-
 class_int.plot_confusion_matrix()
 plt.show()
 
-learn.export('pretrained_sam_vit.pkl')
+learn.export(str(mod_name) + str(epochs) + 'lr' + str(lr) + 'bs' +str(batch_size) +'.pkl') #exporti
+
+
+#fine-tuning model to small snake dataset
+#learn.dls = ImageDataLoaders.from_folder("formatted_data_1", train='Train', valid='Test', bs=batch_size, item_tfms=Resize(224), seed=42) #loading in data for fine-tuning
+
+
+
+#fine-tuning model to small snake dataset
+learn2 = load_learner(os.path.join(os.getcwd()+'/snake_images',str(mod_name) + str(epochs) + 'lr' + str(lr) + 'bs' +str(batch_size) +'.pkl'))
+learn2.dls = ImageDataLoaders.from_folder("formatted_data_updated", train='Train', valid='Test', bs=batch_size, item_tfms=Resize(224), seed=42) #loading in data for fine-tuning
+#setting to second gpu and setting random seed
+torch.cuda.set_device(1)
+learn2.dls.device = default_device()
+learn2.dls.rng.seed(42)
+secondary_epochs = 4
+#Need to figure out how to reduce to 1-2 epochs without it throwing an error
+learn2.fine_tune(secondary_epochs,lr) #fine-tuning model, freeze for 1 epoch then unfreeze and run epochs
+learn2.show_results()
+print("Model Loaded: "+str(os.path.join(os.getcwd()+'/snake_images',str(mod_name) + str(epochs) + 'lr' + str(lr) + 'bs' +str(batch_size) +'.pkl')))
+print("epochs: " + str(secondary_epochs) + ", lr: " + str(lr) +", bs: " +str(batch_size))
+
+#presenting confusion matrix
+class_int = ClassificationInterpretation.from_learner(learn2)
+class_int.plot_confusion_matrix()
+plt.show()
+
+learn2.export(str(mod_name) + str(epochs) + 'lr' + str(lr) + 'bs' +str(batch_size) +'small_data.pkl') #saving fine-tuned model

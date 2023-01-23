@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
             training = True
             test_done = False
-            os.chdir("train_data")
+            os.chdir("train")
             cur_snake = species.split(".")[0]
             if not os.path.isdir(cur_snake):
                 os.mkdir(cur_snake)
@@ -26,7 +26,7 @@ if __name__ == '__main__':
             if(training == True and len([name for name in os.listdir('.') if os.path.isfile(name)])>=train_size):
                 training = False
                 count = train_size
-                os.chdir("../../test_data")
+                os.chdir("../../test")
                 if not os.path.isdir(cur_snake):
                     os.mkdir(cur_snake)
                 os.chdir(cur_snake)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                     if training:
                         if count == train_size:
                             training = False
-                            os.chdir("../../test_data")
+                            os.chdir("../../test")
                             if not os.path.isdir(cur_snake):
                                 os.mkdir(cur_snake)
                             os.chdir(cur_snake)

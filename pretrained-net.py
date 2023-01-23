@@ -7,8 +7,9 @@ import torch.optim as optim
 import numpy as np
 import torchvision
 from torchvision.datasets import ImageFolder
+from torchvision.models import Inception_V3_Weights
 from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from torchvision import datasets, models, transforms
 import os
 
@@ -20,21 +21,22 @@ https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.ht
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
 print("Cuda Available: ",torch.cuda.is_available())
+print("Version: ",torch.version.cuda)
 
 os.chdir("snake_images")
 species_classes = [fName for fName in os.listdir() if fName.endswith(".csv")]
 for species in species_classes:
     species = species.split(".")[0]
 #parameters
-epoch_num = 50
+epoch_num = 15
 batch_size = 64
-learning_rate = 0.001
+learning_rate = 0.0001
 class_num = len(species_classes)
 
 #parameters for automation
-epoch_set = [50]#5,15,30,50
-batch_set = [64]#32,64
-learn_rates = [0.0001]#0.01,0.001,0.0001
+epoch_set = [100]
+batch_set = [32,64,128]
+learn_rates = [0.0001]
 
 for epochs in epoch_set:
     for batch in batch_set:
@@ -69,7 +71,7 @@ for epochs in epoch_set:
             print(len(species_classes)," classes")
             #plt.show()
 
-            model = models.inception_v3(pretrained=True).to(device)
+            model = models.inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1).to(device)
             num_features = model.AuxLogits.fc.in_features
             model.AuxLogits.fc = nn.Linear(num_features,class_num)
             num_features = model.fc.in_features
@@ -107,6 +109,7 @@ for epochs in epoch_set:
             val_history = []
             best_model_wts = copy.deepcopy(model.state_dict())
             best_acc = 0.0
+            best_epoch = -1
             model = model.to(device)
             #print(model)
             n_samples = 0
@@ -176,16 +179,18 @@ for epochs in epoch_set:
                     if phase == 'val' and epoch_acc > best_acc:
                         best_acc = epoch_acc
                         best_model_wts = copy.deepcopy(model.state_dict())
+                        best_epoch = epoch
                     if phase == 'val':
                         val_history.append(epoch_acc)
 
                 print()
 
             time_tot = time.time() - since
-            file = str(epochs)+"_e_"+str(batch)+"_b_"+str(lr)+"_lr_pretrained.txt"
+            file = str(epochs)+"_e_"+str(batch)+"_b_"+str(lr)+"_lr.txt"
             with open('../outputs/' + file, 'w') as f:
                 f.write("Runtime: "+str(time_tot//60)+"m "+str(time_tot%60)+"s\n")
                 f.write("Best Val Acc: "+str(best_acc)+"\n")
+                f.write("Best Epoch: "+str(best_epoch)+"\n")
                 f.write("Overall Acc: "+str(100.0*n_correct/n_samples)+"\n")
                 for i in range(len(species_classes)):
                     acc = 100.0 * n_class_correct[i] / n_class_samples[i]
